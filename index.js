@@ -1,12 +1,10 @@
 const { Client, GatewayIntentBits, Collection, Events } = require('discord.js');
 const fs = require('fs');
 const path = require('path');
-const TOKEN = process.env.DISCORD_TOKEN;
 
-const express = require('express');
-const app = express();
-app.get('/', (req, res) => res.send('Bot Discord en ligne !'));
-app.listen(process.env.PORT || 3000, () => console.log('Serveur Web prêt.'));
+// On utilise les variables d'environnement de Render au lieu de config.json
+const TOKEN = process.env.DISCORD_TOKEN;
+const PREFIX = process.env.PREFIX || '!'; // Si vous n'mettez pas de préfixe sur Render, ce sera '!' par défaut
 
 const client = new Client({
   intents: [
@@ -19,7 +17,12 @@ const client = new Client({
   ],
 });
 
-client.config = config;
+// Pour garder la compatibilité si vos commandes utilisent client.config
+client.config = {
+  token: TOKEN,
+  prefix: PREFIX
+};
+
 client.commands = new Collection();
 client.aliases = new Map();
 client.cmdList = [];
@@ -27,18 +30,29 @@ client.afk = new Map();
 client.cooldowns = new Map();
 
 for (const dir of fs.readdirSync(path.join(__dirname, 'commands'))) {
-  for (const file of fs.readdirSync(path.join(__dirname, 'commands', dir)).filter(f => f.endsWith('.js'))) {
-    const cmd = require(path.join(__dirname, 'commands', dir, file));
-    client.commands.set(cmd.name, cmd);
-    client.cmdList.push(cmd);
-    if (cmd.aliases) for (const a of cmd.aliases) client.aliases.set(a, cmd.name);
+  const dirPath = path.join(__dirname, 'commands', dir);
+  if (fs.statSync(dirPath).isDirectory()) {
+    for (const file of fs.readdirSync(dirPath).filter(f => f.endsWith('.js'))) {
+      const cmd = require(path.join(dirPath, file));
+      if (cmd.name) {
+        client.commands.set(cmd.name, cmd);
+        client.cmdList.push(cmd);
+        if (cmd.aliases) for (const a of cmd.aliases) client.aliases.set(a, cmd.name);
+      }
+    }
   }
 }
 
 client.once(Events.ClientReady, () => {
   console.log(`[Bot] Connecté en tant que ${client.user.tag}`);
   console.log(`[Bot] ${client.cmdList.length} commandes chargées`);
-  require('./web/server')(client);
+  
+  // Lance votre serveur web pour UptimeRobot
+  try {
+    require('./web/server')(client);
+  } catch (e) {
+    console.log("[Web] Serveur web optionnel non chargé ou introuvable.");
+  }
 });
 
 async function handleAfk(message) {
@@ -48,7 +62,7 @@ async function handleAfk(message) {
       if (reason) await message.reply(`💤 **${user.tag}** est AFK : ${reason}`).catch(() => {});
     }
   }
-  if (client.afk.has(message.author.id) && !message.content.startsWith(config.prefix)) {
+  if (client.afk.has(message.author.id) && !message.content.startsWith(PREFIX)) {
     client.afk.delete(message.author.id);
     await message.reply('👋 Content de te revoir ! Ton AFK est désactivé.').catch(() => {});
   }
@@ -59,9 +73,9 @@ client.on(Events.MessageCreate, async (message) => {
 
   await handleAfk(message);
 
-  if (!message.content.startsWith(config.prefix)) return;
+  if (!message.content.startsWith(PREFIX)) return;
 
-  const args = message.content.slice(config.prefix.length).trim().split(/ +/);
+  const args = message.content.slice(PREFIX.length).trim().split(/ +/);
   const cmdName = args.shift().toLowerCase();
   const cmd = client.commands.get(cmdName) || client.commands.get(client.aliases.get(cmdName));
   if (!cmd) return;
@@ -77,7 +91,7 @@ client.on(Events.MessageCreate, async (message) => {
     if (now < expiration) {
       const rest = ((expiration - now) / 1000).toFixed(1);
       return message
-        .reply(`⏳ Calme-toi ! Attends **${rest}s** avant de réutiliser \`${config.prefix}${cmd.name}\`.`)
+        .reply(`⏳ Calme-toi ! Attends **${rest}s** avant de réutiliser \`${PREFIX}${cmd.name}\`.`)
         .catch(() => {});
     }
   }
@@ -92,8 +106,13 @@ client.on(Events.MessageCreate, async (message) => {
   }
 });
 
-client.login(config.token).catch((err) => {
-  console.error('[Bot] Impossible de se connecter. Vérifie ton token dans config.json !');
+if (!TOKEN) {
+  console.error('[Bot] Erreur : Aucun token fourni ! Configurez la variable DISCORD_TOKEN sur Render.');
+  process.exit(1);
+}
+
+client.login(TOKEN).catch((err) => {
+  console.error('[Bot] Impossible de se connecter. Vérifie ton token !');
   console.error(err.message);
   process.exit(1);
 });
