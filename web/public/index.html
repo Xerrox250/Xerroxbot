@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="fr" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Pinky — Dashboard</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🌸</text></svg>" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="bg-glow"></div>
+
+  <header class="header">
+    <div class="brand">
+      <div class="brand-avatar" id="brandAvatar">🌸</div>
+      <div>
+        <h1 id="botName">Pinky</h1>
+        <span class="brand-status">
+          <span class="status-dot" id="statusDot"></span>
+          <span id="statusText">Hors ligne</span>
+        </span>
+      </div>
+    </div>
+
+    <label class="switch">
+      <input type="checkbox" id="themeToggle" />
+      <span class="slider"><span class="switch-icons">🌑☀️</span></span>
+    </label>
+  </header>
+
+  <main class="container">
+    <section class="hero">
+      <p class="eyebrow">Dashboard du bot</p>
+      <h2>Un bot sympa pour un serveur de potes 💖</h2>
+      <p class="hero-sub">
+        Modération, économie, fun, sondages... tout est là. Retrouve <strong>les
+        <span id="countCommands">0</span> commandes</strong> ci-dessous, ou teste les commandes fun directement ici.
+      </p>
+    </section>
+
+    <section class="stats" id="stats">
+      <div class="stat-card">
+        <span class="stat-icon">🖥️</span>
+        <div><p id="statServers">—</p><span>Serveurs</span></div>
+      </div>
+      <div class="stat-card">
+        <span class="stat-icon">👥</span>
+        <div><p id="statMembers">—</p><span>Membres</span></div>
+      </div>
+      <div class="stat-card">
+        <span class="stat-icon">🏓</span>
+        <div><p id="statPing">—</p><span>Latence</span></div>
+      </div>
+      <div class="stat-card">
+        <span class="stat-icon">⏱️</span>
+        <div><p id="statUptime">—</p><span>Uptime</span></div>
+      </div>
+    </section>
+
+    <section class="panel commands">
+      <div class="panel-head">
+        <h3>⚡ Commandes</h3>
+        <input type="search" id="search" class="search" placeholder="Rechercher une commande…" autocomplete="off" />
+      </div>
+      <div class="tabs" id="tabs"></div>
+      <div class="cards" id="cards"></div>
+      <p class="empty" id="emptySearch" hidden>Aucune commande ne correspond 😕</p>
+    </section>
+
+    <section class="panel console">
+      <div class="panel-head">
+        <h3>🎛️ Console fun</h3>
+        <span class="hint">Teste les commandes sans spammer le serveur</span>
+      </div>
+      <div class="console-row">
+        <select id="funCmd" class="select">
+          <option value="roll">🎲 roll</option>
+          <option value="8ball">🎱 8ball</option>
+          <option value="flip">🪙 flip</option>
+          <option value="rps">✊✋✌️ rps</option>
+        </select>
+        <input type="text" id="funArgs" class="input" placeholder="Arguments (ex : 6, une question…)" autocomplete="off" />
+        <button id="funGo" class="btn">Lancer</button>
+      </div>
+      <div id="funResult" class="fun-result" hidden></div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    Fait avec 💗 — <span id="footerName">Pinky</span> · <a href="#" id="footerLink">Discord</a>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>
