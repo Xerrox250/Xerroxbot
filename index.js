@@ -3,6 +3,11 @@ const fs = require('fs');
 const path = require('path');
 const config = require('./config.json');
 
+const express = require('express');
+const app = express();
+app.get('/', (req, res) => res.send('Bot Discord en ligne !'));
+app.listen(process.env.PORT || 3000, () => console.log('Serveur Web prêt.'));
+
 const client = new Client({
   intents: [
     GatewayIntentBits.Guilds,
