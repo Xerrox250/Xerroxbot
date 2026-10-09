@@ -1,7 +1,7 @@
 const { Client, GatewayIntentBits, Collection, Events } = require('discord.js');
 const fs = require('fs');
 const path = require('path');
-const config = require('./config.json');
+const TOKEN = process.env.DISCORD_TOKEN;
 
 const express = require('express');
 const app = express();
