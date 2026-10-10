@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="fr" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Pinky — Panneau de contrôle</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎛️</text></svg>" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="bg-glow"></div>
+
+  <aside class="sidebar" id="sidebar">
+    <div class="side-brand">
+      <div class="brand-avatar" id="brandAvatar">🌸</div>
+      <div>
+        <strong id="botName">Bot</strong>
+        <span class="brand-status"><span class="status-dot" id="statusDot"></span><span id="statusText">Connexion…</span></span>
+      </div>
+    </div>
+
+    <nav class="nav" id="nav">
+      <button class="nav-item active" data-view="overview"><span>📊</span> Vue d'ensemble</button>
+      <button class="nav-item" data-view="servers"><span>🖥️</span> Serveurs</button>
+      <button class="nav-item" data-view="commands"><span>⚡</span> Commandes</button>
+      <button class="nav-item" data-view="console"><span>🎛️</span> Console</button>
+      <button class="nav-item" data-view="economy"><span>💰</span> Économie</button>
+      <button class="nav-item" data-view="warnings"><span>⚠️</span> Avertissements</button>
+    </nav>
+
+    <div class="side-foot">
+      <label class="switch">
+        <input type="checkbox" id="themeToggle" />
+        <span class="slider"><span class="switch-icons">🌑☀️</span></span>
+      </label>
+      <span id="sidePrefix">préfixe !</span>
+    </div>
+  </aside>
+
+  <main class="main">
+    <header class="topbar">
+      <button class="menu-toggle" id="menuToggle">☰</button>
+      <h1 id="viewTitle">Vue d'ensemble</h1>
+      <span class="top-ping" id="topPing">—</span>
+    </header>
+
+    <section class="view active" id="view-overview">
+      <div class="hero">
+        <p class="eyebrow">Panneau de contrôle</p>
+        <h2 id="heroTitle">Gère ton bot et tes serveurs</h2>
+        <p class="hero-sub">
+          Modération, salons, membres, économie et <strong><span id="countCommands">0</span> commandes</strong> —
+          tout se pilote depuis cette interface. Les actions « live » agissent réellement sur Discord.
+        </p>
+      </div>
+      <div class="stats">
+        <div class="stat-card"><span class="stat-icon">🖥️</span><div><p id="statServers">—</p><span>Serveurs</span></div></div>
+        <div class="stat-card"><span class="stat-icon">👥</span><div><p id="statMembers">—</p><span>Membres</span></div></div>
+        <div class="stat-card"><span class="stat-icon">💬</span><div><p id="statChannels">—</p><span>Salons</span></div></div>
+        <div class="stat-card"><span class="stat-icon">🏓</span><div><p id="statPing">—</p><span>Latence API</span></div></div>
+        <div class="stat-card"><span class="stat-icon">⏱️</span><div><p id="statUptime">—</p><span>Uptime</span></div></div>
+        <div class="stat-card"><span class="stat-icon">⚡</span><div><p id="statCmds">—</p><span>Commandes</span></div></div>
+      </div>
+      <div class="panel">
+        <div class="panel-head"><h3>🚀 Accès rapide</h3></div>
+        <div class="quick">
+          <button class="quick-btn" data-go="servers"><span>🖥️</span> Gérer mes serveurs</button>
+          <button class="quick-btn" data-go="console"><span>🎛️</span> Lancer une commande</button>
+          <button class="quick-btn" data-go="commands"><span>📚</span> Explorer les commandes</button>
+          <button class="quick-btn" data-go="economy"><span>💰</span> Classement économie</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="view" id="view-servers">
+      <div class="server-layout">
+        <div class="server-list panel">
+          <div class="panel-head"><h3>🖥️ Serveurs</h3></div>
+          <div id="guildList" class="guild-list"></div>
+        </div>
+        <div class="server-detail panel" id="guildDetail">
+          <p class="empty">Sélectionne un serveur pour le gérer.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="view" id="view-commands">
+      <div class="panel">
+        <div class="panel-head">
+          <h3>⚡ Commandes</h3>
+          <input type="search" id="cmdSearch" class="search" placeholder="Rechercher une commande…" autocomplete="off" />
+        </div>
+        <div class="tabs" id="cmdTabs"></div>
+        <div class="cards" id="cmdCards"></div>
+        <p class="empty" id="cmdEmpty" hidden>Aucune commande ne correspond.</p>
+      </div>
+    </section>
+
+    <section class="view" id="view-console">
+      <div class="panel">
+        <div class="panel-head"><h3>🎛️ Console de commandes</h3></div>
+        <p class="hint">
+          Écris une commande comme si tu étais dans un salon. Les mentions
+          (<code>@membre</code>) fonctionnent avec les IDs <code>&lt;@id&gt;</code>. Le mode « Test » n'envoie rien sur Discord.
+        </p>
+        <div class="console-grid">
+          <label>Serveur
+            <select id="execGuild" class="select"></select>
+          </label>
+          <label>Salon
+            <select id="execChannel" class="select"></select>
+          </label>
+          <label>Commande
+            <input type="text" id="execCommand" class="input" placeholder="roll" autocomplete="off" />
+          </label>
+          <label>Arguments
+            <input type="text" id="execArgs" class="input" placeholder="100 — ou @membre raison" autocomplete="off" />
+          </label>
+        </div>
+        <div class="console-actions">
+          <label class="check"><input type="radio" name="execMode" value="dry" checked /> Test (aucun envoi)</label>
+          <label class="check"><input type="radio" name="execMode" value="live" /> Live (agit vraiment)</label>
+          <button id="execRun" class="btn">Exécuter</button>
+        </div>
+        <div id="execOutput" class="output" hidden></div>
+      </div>
+      <div class="panel">
+        <div class="panel-head"><h3>🎉 Raccourcis fun</h3></div>
+        <div class="quick" id="funQuick"></div>
+      </div>
+    </section>
+
+    <section class="view" id="view-economy">
+      <div class="panel">
+        <div class="panel-head">
+          <h3>💰 Classement des plus riches</h3>
+          <span class="hint" id="ecoSummary">—</span>
+        </div>
+        <div id="ecoTable" class="table-wrap"></div>
+      </div>
+    </section>
+
+    <section class="view" id="view-warnings">
+      <div class="panel">
+        <div class="panel-head">
+          <h3>⚠️ Avertissements</h3>
+          <span class="hint" id="warnSummary">—</span>
+        </div>
+        <div id="warnList" class="warn-list"></div>
+      </div>
+    </section>
+
+    <footer class="footer">Panneau de contrôle · <span id="footerName">Bot</span> · fait avec 💗</footer>
+  </main>
+
+  <div class="modal" id="modal" hidden>
+    <div class="modal-box">
+      <h3 id="modalTitle">Action</h3>
+      <p id="modalDesc" class="hint"></p>
+      <label>Raison<input type="text" id="modalReason" class="input" placeholder="Raison…" /></label>
+      <label id="modalDurationWrap" hidden>Durée<input type="text" id="modalDuration" class="input" placeholder="10m, 2h, 3d" /></label>
+      <div class="modal-actions">
+        <button class="btn ghost" id="modalCancel">Annuler</button>
+        <button class="btn" id="modalConfirm">Confirmer</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast" hidden></div>
+
+  <script src="app.js"></script>
+</body>
+</html>
