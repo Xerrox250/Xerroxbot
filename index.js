@@ -1,10 +1,23 @@
 const { Client, GatewayIntentBits, Collection, Events } = require('discord.js');
 const fs = require('fs');
 const path = require('path');
+const express = require('express');
 
-// On utilise les variables d'environnement de Render au lieu de config.json
+// --- 1. Configuration du serveur Express pour Render & UptimeRobot ---
+const app = express();
+const PORT = process.env.PORT || 3000;
+
+app.get('/', (req, res) => {
+    res.send('Bot Discord en ligne 24/7 !');
+});
+
+app.listen(PORT, () => {
+    console.log(`[Web] Serveur web prêt et écoute sur le port ${PORT}`);
+});
+
+// --- 2. Variables d'environnement ---
 const TOKEN = process.env.DISCORD_TOKEN;
-const PREFIX = process.env.PREFIX || '!'; // Si vous n'mettez pas de préfixe sur Render, ce sera '!' par défaut
+const PREFIX = process.env.PREFIX || '+';
 
 const client = new Client({
   intents: [
@@ -17,7 +30,6 @@ const client = new Client({
   ],
 });
 
-// Pour garder la compatibilité si vos commandes utilisent client.config
 client.config = {
   token: TOKEN,
   prefix: PREFIX
@@ -29,6 +41,7 @@ client.cmdList = [];
 client.afk = new Map();
 client.cooldowns = new Map();
 
+// --- 3. Chargement des commandes ---
 for (const dir of fs.readdirSync(path.join(__dirname, 'commands'))) {
   const dirPath = path.join(__dirname, 'commands', dir);
   if (fs.statSync(dirPath).isDirectory()) {
@@ -46,13 +59,6 @@ for (const dir of fs.readdirSync(path.join(__dirname, 'commands'))) {
 client.once(Events.ClientReady, () => {
   console.log(`[Bot] Connecté en tant que ${client.user.tag}`);
   console.log(`[Bot] ${client.cmdList.length} commandes chargées`);
-  
-  // Lance votre serveur web pour UptimeRobot
-  try {
-    require('./web/server')(client);
-  } catch (e) {
-    console.log("[Web] Serveur web optionnel non chargé ou introuvable.");
-  }
 });
 
 async function handleAfk(message) {
