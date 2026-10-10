@@ -46,8 +46,43 @@ async function api(url, options) {
   } catch (e) {
     data = null;
   }
-  if (!res.ok) throw new Error((data && data.error) || `Erreur ${res.status}`);
+  if (!res.ok) {
+    if (res.status === 401 && data && data.code === 'UNAUTHORIZED') {
+      showLogin();
+      throw new Error('Authentification requise.');
+    }
+    throw new Error((data && data.error) || `Erreur ${res.status}`);
+  }
   return data;
+}
+
+function showLogin() {
+  $('loginScreen').hidden = false;
+  $('loginError').hidden = true;
+  const pass = $('loginPass');
+  pass.value = '';
+  setTimeout(() => pass.focus(), 50);
+}
+
+function hideLogin() {
+  $('loginScreen').hidden = true;
+}
+
+async function submitLogin() {
+  const pass = $('loginPass').value;
+  $('loginBtn').disabled = true;
+  $('loginBtn').textContent = '…';
+  try {
+    await post('/api/auth/login', { password: pass });
+    hideLogin();
+    afterAuth();
+    toast('Connecté ✅');
+  } catch (e) {
+    $('loginError').hidden = false;
+  } finally {
+    $('loginBtn').disabled = false;
+    $('loginBtn').textContent = 'Se connecter';
+  }
 }
 
 async function post(url, body) {
@@ -770,14 +805,32 @@ function renderFunQuick() {
   }
 }
 
-function init() {
-  initTheme();
-  initNav();
-  renderFunQuick();
+let authStarted = false;
+
+function afterAuth() {
+  hideLogin();
+  if (authStarted) return;
+  authStarted = true;
   loadStatus();
   loadCommands();
   loadGuilds();
+  setInterval(loadStatus, 20000);
+}
 
+async function authCheck() {
+  try {
+    const s = await api('/api/auth/status');
+    if (s.enabled && !s.authed) {
+      showLogin();
+      return;
+    }
+    afterAuth();
+  } catch (e) {
+    showLogin();
+  }
+}
+
+function bindEvents() {
   $('cmdSearch').addEventListener('input', (e) => {
     state.cmdSearch = e.target.value.trim();
     renderCmdCards();
@@ -786,8 +839,16 @@ function init() {
   $('execRun').addEventListener('click', runExec);
   $('execArgs').addEventListener('keydown', (e) => { if (e.key === 'Enter') runExec(); });
   $('execCommand').addEventListener('keydown', (e) => { if (e.key === 'Enter') runExec(); });
+  $('loginBtn').addEventListener('click', submitLogin);
+  $('loginPass').addEventListener('keydown', (e) => { if (e.key === 'Enter') submitLogin(); });
+}
 
-  setInterval(loadStatus, 20000);
+function init() {
+  initTheme();
+  initNav();
+  renderFunQuick();
+  bindEvents();
+  authCheck();
 }
 
 document.addEventListener('DOMContentLoaded', init);

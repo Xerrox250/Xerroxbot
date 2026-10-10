@@ -36,6 +36,8 @@
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
+[hidden] { display: none !important; }
+
 body {
   font-family: var(--font);
   background: var(--bg);
@@ -350,6 +352,22 @@ td.rank { font-weight: 700; color: var(--pink); }
 .warn-item strong { color: var(--text); }
 
 /* ---------------- Modal / toast ---------------- */
+.login-screen {
+  position: fixed; inset: 0; z-index: 80;
+  display: grid; place-items: center;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(6px);
+}
+.login-box {
+  background: var(--bg-card); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 34px 30px;
+  width: min(380px, 90vw); display: flex; flex-direction: column; gap: 14px;
+  align-items: center; text-align: center; box-shadow: var(--shadow);
+}
+.login-box .brand-avatar { width: 62px; height: 62px; font-size: 30px; }
+.login-box h2 { font-size: 20px; font-weight: 700; }
+.login-box .hint { margin-bottom: 4px; }
+
 .modal { position: fixed; inset: 0; z-index: 50; display: grid; place-items: center; background: rgba(0,0,0,0.55); backdrop-filter: blur(3px); }
 .modal-box { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 26px; width: min(440px, 92vw); box-shadow: var(--shadow); display: flex; flex-direction: column; gap: 14px; }
 .modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 6px; }

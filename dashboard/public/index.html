@@ -156,6 +156,17 @@
     <footer class="footer">Panneau de contrôle · <span id="footerName">Bot</span> · fait avec 💗</footer>
   </main>
 
+  <div class="login-screen" id="loginScreen" hidden>
+    <div class="login-box">
+      <div class="brand-avatar">🌸</div>
+      <h2>Accès protégé</h2>
+      <p class="hint">Ce panneau est protégé par un mot de passe.</p>
+      <input type="password" id="loginPass" class="input" placeholder="Mot de passe…" autocomplete="current-password" />
+      <button id="loginBtn" class="btn" style="width:100%">Se connecter</button>
+      <p class="empty" id="loginError" hidden>Mot de passe incorrect.</p>
+    </div>
+  </div>
+
   <div class="modal" id="modal" hidden>
     <div class="modal-box">
       <h3 id="modalTitle">Action</h3>

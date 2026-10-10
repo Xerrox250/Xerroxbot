@@ -1,6 +1,7 @@
 const express = require('express');
 const path = require('path');
 const fs = require('fs');
+const crypto = require('crypto');
 const {
   Client,
   GatewayIntentBits,
@@ -22,6 +23,46 @@ const TOKEN = process.env.DISCORD_TOKEN || fileConfig.token;
 const PREFIX = process.env.PREFIX || fileConfig.prefix || '!';
 const PORT = process.env.DASHBOARD_PORT || 3001;
 const COLORS = fileConfig.colors || { dark: '#FF5DA2', light: '#FF5DA2' };
+const PASSWORD = process.env.DASHBOARD_PASSWORD || fileConfig.dashboardPassword || '';
+const SESSION_MS = 12 * 3600 * 1000;
+
+const SIGN_KEY = PASSWORD ? crypto.createHash('sha256').update(`pinky-dash::${PASSWORD}`).digest() : null;
+
+function signToken(expires) {
+  return crypto.createHmac('sha256', SIGN_KEY).update(String(expires)).digest('hex');
+}
+
+function makeToken() {
+  const expires = Date.now() + SESSION_MS;
+  return `${expires}.${signToken(expires)}`;
+}
+
+function verifyToken(token) {
+  if (!PASSWORD || !token) return false;
+  const [expiresStr, sig] = String(token).split('.');
+  const expires = Number(expiresStr);
+  if (!expires || Date.now() > expires) return false;
+  const expected = signToken(expires);
+  const a = Buffer.from(sig || '');
+  const b = Buffer.from(expected);
+  return a.length === b.length && crypto.timingSafeEqual(a, b);
+}
+
+function parseCookies(header) {
+  const out = {};
+  if (!header) return out;
+  for (const part of String(header).split(';')) {
+    const idx = part.indexOf('=');
+    if (idx === -1) continue;
+    out[part.slice(0, idx).trim()] = decodeURIComponent(part.slice(idx + 1).trim());
+  }
+  return out;
+}
+
+function isAuthed(req) {
+  if (!PASSWORD) return true;
+  return verifyToken(parseCookies(req.headers.cookie).dash_auth);
+}
 
 if (!TOKEN) {
   console.error('[Dashboard] Aucun token trouvé. Définis la variable DISCORD_TOKEN ou un config.json avec "token".');
@@ -162,6 +203,39 @@ async function resolveMentions(guild, text) {
 const app = express();
 app.use(express.json({ limit: '1mb' }));
 app.use(express.static(path.join(__dirname, 'public')));
+
+function cookieString(token, req) {
+  const secure = req.headers['x-forwarded-proto'] === 'https' || req.secure;
+  return `dash_auth=${token}; HttpOnly; Path=/; Max-Age=${Math.floor(SESSION_MS / 1000)}; SameSite=Lax${secure ? '; Secure' : ''}`;
+}
+
+app.get('/api/auth/status', (req, res) => {
+  res.json({ enabled: !!PASSWORD, authed: isAuthed(req) });
+});
+
+app.post('/api/auth/login', (req, res) => {
+  if (!PASSWORD) return res.json({ ok: true, enabled: false });
+  const given = String((req.body && req.body.password) || '');
+  const a = Buffer.from(given);
+  const b = Buffer.from(PASSWORD);
+  const ok = a.length === b.length && crypto.timingSafeEqual(a, b);
+  if (!ok) return res.status(401).json({ error: 'Mot de passe incorrect.' });
+  res.setHeader('Set-Cookie', cookieString(makeToken(), req));
+  res.json({ ok: true });
+});
+
+app.post('/api/auth/logout', (req, res) => {
+  const secure = req.headers['x-forwarded-proto'] === 'https' || req.secure;
+  res.setHeader('Set-Cookie', `dash_auth=; HttpOnly; Path=/; Max-Age=0; SameSite=Lax${secure ? '; Secure' : ''}`);
+  res.json({ ok: true });
+});
+
+function requireAuth(req, res, next) {
+  if (isAuthed(req)) return next();
+  res.status(401).json({ error: 'Authentification requise.', code: 'UNAUTHORIZED' });
+}
+
+app.use('/api', requireAuth);
 
 app.get('/api/status', (req, res) => {
   const guilds = [...client.guilds.cache.values()];
@@ -518,6 +592,9 @@ app.post('/api/exec', async (req, res) => {
 client.once('ready', () => {
   console.log(`[Dashboard] Connecté en tant que ${client.user.tag}`);
   console.log(`[Dashboard] ${client.cmdList.length} commandes chargées · ${client.guilds.cache.size} serveur(s)`);
+  if (!PASSWORD) {
+    console.warn('[Dashboard] ⚠️ Authentification DÉSACTIVÉE — définis DASHBOARD_PASSWORD (ou "dashboardPassword" dans config.json) pour protéger l’interface.');
+  }
   app.listen(PORT, () => {
     console.log(`[Dashboard] Interface disponible sur http://localhost:${PORT}`);
   });
